@@ -40,15 +40,15 @@ try {
         FOREIGN KEY (created_by) REFERENCES users(id)
     )");
 
-    // Добавление новых полей в старую базу без удаления существующих данных.
+    // Безопасная миграция: существующие записи сохраняются.
     $addColumn = function ($table, $column, $definition) use ($pdo) {
-        $columns = $pdo->query("PRAGMA table_info(" . $table . ")")->fetchAll();
+        $columns = $pdo->query('PRAGMA table_info(' . $table . ')')->fetchAll();
         foreach ($columns as $item) {
             if ($item['name'] === $column) {
                 return;
             }
         }
-        $pdo->exec("ALTER TABLE " . $table . " ADD COLUMN " . $column . " " . $definition);
+        $pdo->exec('ALTER TABLE ' . $table . ' ADD COLUMN ' . $column . ' ' . $definition);
     };
 
     $addColumn('users', 'role', "TEXT NOT NULL DEFAULT 'user'");
@@ -57,13 +57,15 @@ try {
     $addColumn('bugs', 'priority', "TEXT NOT NULL DEFAULT 'Medium'");
     $addColumn('bugs', 'status', "TEXT NOT NULL DEFAULT 'Новая'");
     $addColumn('bugs', 'created_by', 'INTEGER');
-    $addColumn('bugs', 'created_at', "TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP");
+    // Для ALTER TABLE используется TEXT без CURRENT_TIMESTAMP: SQLite запрещает
+    // добавлять в существующую таблицу столбец с таким динамическим значением по умолчанию.
+    $addColumn('bugs', 'created_at', 'TEXT');
     $addColumn('bugs', 'updated_at', 'TEXT');
 
-    // Для старых записей заполняем автора владельцем проекта.
     $pdo->exec("UPDATE bugs SET created_by = (
         SELECT owner_id FROM projects WHERE projects.id = bugs.project_id
     ) WHERE created_by IS NULL");
+    $pdo->exec("UPDATE bugs SET created_at = CURRENT_TIMESTAMP WHERE created_at IS NULL OR created_at = ''");
 } catch (PDOException $e) {
     error_log('Ошибка базы данных: ' . $e->getMessage());
     http_response_code(500);
@@ -108,6 +110,10 @@ function verifyCsrfToken($token) {
 
 function h($value) {
     return htmlspecialchars((string)($value ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+}
+
+function textLength($value) {
+    return preg_match_all('/./us', (string)$value);
 }
 
 function canManageBug($pdo, $bug) {
