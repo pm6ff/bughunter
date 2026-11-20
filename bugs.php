@@ -52,6 +52,15 @@ $bugs = $pdo->query($sql)->fetchAll();
                         <?php if (canManageBug($pdo, $bug)): ?>
                             | <a href="bug_edit.php?id=<?= (int)$bug['id'] ?>">Изменить</a>
                         <?php endif; ?>
+                        <?php if (isAdmin($pdo)): ?>
+                            | <form action="bug_delete.php" method="POST" style="display:inline;">
+                                <input type="hidden" name="id" value="<?= (int)$bug['id'] ?>">
+                                <input type="hidden" name="csrf_token" value="<?= h(generateCsrfToken()) ?>">
+                                <button type="submit" onclick="return confirm('Вы действительно хотите удалить эту ошибку?')">
+                                    Удалить
+                                </button>
+                            </form>
+                        <?php endif; ?>
                     </td>
                 </tr>
             <?php endforeach; ?>
