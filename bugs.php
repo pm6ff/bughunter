@@ -2,8 +2,8 @@
 require_once __DIR__ . '/db.php';
 requireLogin();
 
-$sql = "SELECT b.id, b.title, b.priority, b.status, b.created_at,
-               p.name AS project_name, u.email AS author
+$sql = "SELECT b.id, b.title, b.priority, b.status, b.created_at, b.created_by, b.project_id,
+               p.name AS project_name, p.owner_id, u.email AS author
         FROM bugs b
         LEFT JOIN projects p ON p.id = b.project_id
         LEFT JOIN users u ON u.id = b.created_by
@@ -49,8 +49,9 @@ $bugs = $pdo->query($sql)->fetchAll();
                     <td><?= h($bug['created_at']) ?></td>
                     <td>
                         <a href="bug_view.php?id=<?= (int)$bug['id'] ?>">Открыть</a>
-                        |
-                        <a href="bug_edit.php?id=<?= (int)$bug['id'] ?>">Изменить</a>
+                        <?php if (canManageBug($pdo, $bug)): ?>
+                            | <a href="bug_edit.php?id=<?= (int)$bug['id'] ?>">Изменить</a>
+                        <?php endif; ?>
                     </td>
                 </tr>
             <?php endforeach; ?>
