@@ -21,7 +21,8 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
 <body>
     <h2>Добро пожаловать в BugHunter!</h2>
     <p>Вы авторизованы как: <strong><?= htmlspecialchars($user['email']) ?></strong></p>
-    <p>ID вашей сессии: <?= session_id() ?></p>
+    <p><a href="bugs.php">Управление ошибками</a></p>
+    <p><a href="projects.php">Мои проекты</a></p>
     
     <!-- 7. Выход -->
     <a href="logout.php"><button>Выйти из системы</button></a>
