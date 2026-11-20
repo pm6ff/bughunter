@@ -38,10 +38,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $priority = $_POST['priority'] ?? '';
     $status = $_POST['status'] ?? '';
 
-    if ($title === '' || mb_strlen($title) > 200) {
+    if ($title === '' || textLength($title) > 200) {
         $errors[] = 'Название обязательно и должно содержать не более 200 символов.';
     }
-    if (mb_strlen($description) > 10000) {
+    if (textLength($description) > 10000) {
         $errors[] = 'Описание не должно превышать 10000 символов.';
     }
     if (!in_array($priority, $priorities, true)) {
